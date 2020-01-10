@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+
+    <springProfile name="local | dev">
+        <root level="WARN">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+
+        <logger name="io.skyward" level="INFO"/>
+    </springProfile>
+
+    <springProfile name="jsonlogging">
+        <appender name="jsonlogger" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LogstashEncoder"/>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="jsonlogger"/>
+        </root>
+
+        <logger name="com.example.test.jsonlogger" level="INFO">
+            <appender-ref ref="jsonlogger"/>
+        </logger>
+    </springProfile>
+
+</configuration>
