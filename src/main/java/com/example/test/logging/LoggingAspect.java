@@ -40,8 +40,8 @@ public class LoggingAspect {
 
     private static void logException(Exception ex, Logger logger, String message) {
         logger.error("Exception({}) : {}",
-                value("ex", message),
-                value("ex", ex.getMessage()),
+                value("errorMsg", message),
+                value("exception", ex.getMessage()),
                 value("stacktrace", formattedStackTrace(ex.getStackTrace())));
     }
 
@@ -60,7 +60,7 @@ public class LoggingAspect {
             return Optional.empty();
         }
 
-        return Optional.of(serviceLogging);
+        return Optional.ofNullable(serviceLogging);
     }
 
     private static Logger getLoggerFromJoinPoint(JoinPoint joinPoint) {
@@ -70,31 +70,16 @@ public class LoggingAspect {
     }
 
     private static String getErrorMsg(Optional<ServiceLogging> serviceLogging) {
-        final StringBuilder s = new StringBuilder();
-        serviceLogging.ifPresent(annotation -> s.append(annotation.message()));
+        final StringBuilder sb = new StringBuilder();
+        serviceLogging.ifPresent(annotation -> sb.append(annotation.message()));
 
-        return s.toString();
+        return sb.toString();
     }
 
     @AfterThrowing(pointcut = "@annotation(ServiceLogging)",
             throwing = "ex",
             argNames = "joinPoint,ex")
     public void logExecutionTime(JoinPoint joinPoint, Exception ex) {
-
-        System.out.println("ASPECT ACTIVATED");
-        System.out.println("ex = " + ex);
-        System.out.println("serviceLogging = ");
-        System.out.println("joinPoint = " + joinPoint);
-        System.out.println("joinPoint = " + joinPoint.getClass());
-        System.out.println("joinPoint kind = " + joinPoint.getKind());
-        System.out.println("joinPoint args = " + joinPoint.getArgs());
-        System.out.println("joinPoint toString = " + joinPoint.toLongString());
-        System.out.println("joinPoint sig = " + joinPoint.getSignature());
-        System.out.println("joinPoint source location = " + joinPoint.getSourceLocation());
-        System.out.println("joinPoint target = " + joinPoint.getTarget());
-        System.out.println("joinPoint = " + joinPoint.getStaticPart());
-
-        System.out.println("joinPoint = " + joinPoint.getArgs().length);
 
         final Optional<ServiceLogging> serviceLogging = getServiceLoggingAnnotation(joinPoint);
 
