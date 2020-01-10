@@ -8,5 +8,9 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ServiceLogging {
- 
+
+    /**
+     * Assign an exception message.
+     */
+    String message() default "";
 }

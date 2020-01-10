@@ -6,11 +6,11 @@ import org.springframework.stereotype.Service;
 @Service
 public class TestService {
 
-    @ServiceLogging
+    @ServiceLogging(message = "Test message for logger")
     public void test() throws Exception {
 
-        System.out.println("test123");
+        System.out.println("Executing Service method annotated with @ServiceLogging");
 
-        throw new Exception("test123");
+        throw new Exception("Expected Exception: TestService.test");
     }
 }
