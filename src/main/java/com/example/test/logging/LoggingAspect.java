@@ -1,7 +1,6 @@
 package com.example.test.logging;
 
 import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
@@ -39,9 +38,42 @@ public class LoggingAspect {
                 .toArray(String[]::new);
     }
 
-    private static void logException(Exception ex, Logger logger) {
-        logger.error("Exception : {}", value("ex", ex.getMessage()),
+    private static void logException(Exception ex, Logger logger, String message) {
+        logger.error("Exception({}) : {}",
+                value("ex", message),
+                value("ex", ex.getMessage()),
                 value("stacktrace", formattedStackTrace(ex.getStackTrace())));
+    }
+
+    private static Optional<ServiceLogging> getServiceLoggingAnnotation(JoinPoint joinPoint) {
+        if (isNull(joinPoint) || isNull(joinPoint.getSignature())) {
+            return Optional.empty();
+        }
+
+        final ServiceLogging serviceLogging;
+        try {
+            final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+            final Method method = signature.getMethod();
+
+            serviceLogging = method.getAnnotation(ServiceLogging.class);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
+
+        return Optional.of(serviceLogging);
+    }
+
+    private static Logger getLoggerFromJoinPoint(JoinPoint joinPoint) {
+
+        return nonNull(joinPoint) && nonNull(joinPoint.getTarget())
+                ? LoggerFactory.getLogger(joinPoint.getTarget().getClass()) : LOGGER;
+    }
+
+    private static String getErrorMsg(Optional<ServiceLogging> serviceLogging) {
+        final StringBuilder s = new StringBuilder();
+        serviceLogging.ifPresent(annotation -> s.append(annotation.message()));
+
+        return s.toString();
     }
 
     @AfterThrowing(pointcut = "@annotation(ServiceLogging)",
@@ -64,25 +96,8 @@ public class LoggingAspect {
 
         System.out.println("joinPoint = " + joinPoint.getArgs().length);
 
-        ServiceLogging myAnnotation = getServiceLoggingAnnotation(joinPoint);
+        final Optional<ServiceLogging> serviceLogging = getServiceLoggingAnnotation(joinPoint);
 
-        System.out.println("myAnnotation = " + myAnnotation);
-        System.out.println("myAnnotation = " + myAnnotation.message());
-
-        logException(ex, getLoggerFromJoinPoint(joinPoint));
-    }
-
-    private static ServiceLogging getServiceLoggingAnnotation(JoinPoint joinPoint) {
-
-
-        final MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-        final Method method = signature.getMethod();
-
-        return method.getAnnotation(ServiceLogging.class);
-    }
-
-    private static Logger getLoggerFromJoinPoint(JoinPoint joinPoint) {
-        return nonNull(joinPoint) && nonNull(joinPoint.getTarget())
-        ? LoggerFactory.getLogger(joinPoint.getTarget().getClass()) : LOGGER;
+        logException(ex, getLoggerFromJoinPoint(joinPoint), getErrorMsg(serviceLogging));
     }
 }
